@@ -19,7 +19,7 @@ async function penUsable(): Promise<boolean> {
   const status = await refreshPenStatus()
 
   statusAt = Date.now()
-  statusUsable = Boolean(status?.available && status.openDocuments.length === 0)
+  statusUsable = Boolean(status && status.openDocuments.length === 0)
 
   return statusUsable
 }

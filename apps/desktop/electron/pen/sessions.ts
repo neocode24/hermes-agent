@@ -9,7 +9,6 @@ export interface PenSessionEntry {
   closed?: boolean
   docId?: string
   path?: null | string
-  projectId?: null | string
 }
 
 export type PenSessionMap = Record<string, PenSessionEntry>
@@ -46,31 +45,6 @@ export function rememberPenSession(
 
   map[sessionId] = { ...map[sessionId], ...entry, at: Date.now() }
   writePenSessions(filePath, map)
-}
-
-/** Project canvas wins when tagged; otherwise the session's own tie. */
-export function resolvePenEntry(
-  map: PenSessionMap,
-  sessionId: null | string | undefined,
-  projectId?: null | string
-): { entry: null | PenSessionEntry; via: null | 'project' | 'session' } {
-  const own = sessionId ? map[sessionId] ?? null : null
-
-  if (projectId) {
-    let best: null | PenSessionEntry = null
-
-    for (const entry of Object.values(map)) {
-      if (entry.projectId === projectId && entry.path && (!best || (entry.at ?? 0) > (best.at ?? 0))) {
-        best = entry
-      }
-    }
-
-    if (best) {
-      return { entry: best, via: 'project' }
-    }
-  }
-
-  return own ? { entry: own, via: 'session' } : { entry: null, via: null }
 }
 
 export function forgetPenSession(filePath: string, sessionId: null | string | undefined): void {

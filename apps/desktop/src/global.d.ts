@@ -143,12 +143,12 @@ declare global {
       getBootProgress: () => Promise<DesktopBootProgress>
       pen?: {
         status: () => Promise<PenStatus>
-        open: (options?: { name?: string; path?: string; projectId?: string; sessionId?: string }) => Promise<PenOpenResult>
+        open: (options?: { name?: string; path?: string; sessionId?: string }) => Promise<PenOpenResult>
         close: (options?: { keep?: boolean }) => Promise<void>
         tool: (name: string, payload?: Record<string, unknown>) => Promise<PenToolResult>
-        session: (sessionId: string, projectId?: string) => Promise<null | { closed?: boolean; docId: string; path?: null | string; width?: number }>
-        adopt: (sessionId: string, projectId?: string) => Promise<boolean>
-        restore: (sessionId: string, projectId?: string) => Promise<null | { doc?: PenDocumentInfo; docId?: string; url?: string }>
+        session: (sessionId: string) => Promise<null | { closed?: boolean; docId: string; path?: null | string; width?: number }>
+        adopt: (sessionId: string) => Promise<boolean>
+        restore: (sessionId: string) => Promise<null | { doc?: PenDocumentInfo; docId?: string; url?: string }>
         library: () => Promise<{
           items: Array<{
             docId: null | string

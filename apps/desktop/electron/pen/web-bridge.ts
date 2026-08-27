@@ -15,13 +15,11 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
+import { penDocumentFilePath } from './documents'
 import { isPenWebUrl, penEmbedDropped, restorePenEmbedUrl } from './embed-url'
 import type { PenDocument } from './state'
 import { documents, events, log } from './state'
-
-export { isPenWebUrl } from './embed-url'
 
 const CONNECT_RETRY_MS = 500
 const REQUEST_TIMEOUT_MS = 120_000
@@ -51,17 +49,9 @@ function activeDoc(): PenDocument | null {
   return [...documents.values()][0] ?? null
 }
 
-function docFilePath(doc: PenDocument): string | null {
-  try {
-    return doc.fileURI.startsWith('file:') ? fileURLToPath(doc.fileURI) : null
-  } catch {
-    return null
-  }
-}
-
 // Assets live in an assets/ folder beside the .pen, keyed by relative path.
 function assetPath(doc: PenDocument, relativePath: string): string | null {
-  const filePath = docFilePath(doc)
+  const filePath = penDocumentFilePath(doc)
 
   if (!filePath) {
     return null
@@ -74,7 +64,7 @@ function assetPath(doc: PenDocument, relativePath: string): string | null {
 }
 
 async function handleStorageRequest(doc: PenDocument, method: string, payload: any): Promise<unknown> {
-  const filePath = docFilePath(doc)
+  const filePath = penDocumentFilePath(doc)
 
   if (!filePath) {
     throw new Error('web canvas has no backing file')
@@ -240,7 +230,7 @@ export function bindPenWebGuest(guestContents: any, theme: 'dark' | 'light' = 'd
           bridge.ready = true
         }
 
-        log.info(`pen canvas connected (${path.basename(docFilePath(doc) || doc.docId)})`)
+        log.info(`pen canvas connected (${path.basename(penDocumentFilePath(doc) || doc.docId)})`)
 
         return
       }

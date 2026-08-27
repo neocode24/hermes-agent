@@ -8,10 +8,5 @@
 //   - wire.ts       ipcMain + webview attach (called once from main)
 //   - state.ts      document registry + event feed
 
-export { closeDocument, closeOtherPenDocuments, documentIsOpen, shutdownPenHost } from './documents'
-export { isPenWebUrl } from './embed-url'
-export { deletePenCanvas, openPenCanvas, penCanvasUrl, penLibrary, type PenLibraryItem, penStatus, type PenStatus, renamePenCanvas } from './library'
-export { onPenEvent, type PenDocumentInfo } from './state'
-export { type PenToolResult, runPenTool } from './web-bridge'
-export { attachPenWebGuest, bindPenWebGuest, repaintPenWebTheme, shutdownPenWebBridge } from './web-bridge'
+export { shutdownPenHost } from './documents'
 export { syncPenWebTheme, wirePenCanvas } from './wire'

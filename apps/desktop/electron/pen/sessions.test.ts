@@ -9,7 +9,6 @@ import {
   forgetPenSession,
   readPenSessions,
   rememberPenSession,
-  resolvePenEntry,
   retargetPenSessionPaths,
   sessionIdByCanvasPath,
   writePenSessions
@@ -19,31 +18,28 @@ function tmpStore(): string {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pen-sessions-')), 'pen-canvas-sessions.json')
 }
 
-test('remember then resolve by session', () => {
+test('remember then read by session', () => {
   const file = tmpStore()
 
   rememberPenSession(file, 'chat-1', { docId: 'doc-1', path: '/pens/a.pen' })
 
-  const { entry, via } = resolvePenEntry(readPenSessions(file), 'chat-1')
+  const entry = readPenSessions(file)['chat-1']
 
-  assert.equal(via, 'session')
   assert.equal(entry?.docId, 'doc-1')
   assert.equal(entry?.path, '/pens/a.pen')
 })
 
-test('project-tagged path wins over another session own tie', () => {
+test('a session only sees its own tie', () => {
   const file = tmpStore()
 
   writePenSessions(file, {
-    older: { docId: 'doc-old', path: '/pens/old.pen', projectId: 'proj', at: 1 },
-    newer: { docId: 'doc-new', path: '/pens/new.pen', projectId: 'proj', at: 2 },
+    older: { docId: 'doc-old', path: '/pens/old.pen', at: 1 },
+    newer: { docId: 'doc-new', path: '/pens/new.pen', at: 2 },
     other: { docId: 'doc-other', path: '/pens/other.pen', at: 3 }
   })
 
-  const { entry, via } = resolvePenEntry(readPenSessions(file), 'other', 'proj')
-
-  assert.equal(via, 'project')
-  assert.equal(entry?.path, '/pens/new.pen')
+  assert.equal(readPenSessions(file).other?.path, '/pens/other.pen')
+  assert.equal(readPenSessions(file).missing, undefined)
 })
 
 test('forget drops the session; retarget follows a rename', () => {

@@ -4,10 +4,8 @@
 import { EventEmitter } from 'node:events'
 
 const log = {
-  debug: (..._args: unknown[]) => {},
   info: (...args: unknown[]) => console.log('[pen]', ...args),
-  warn: (...args: unknown[]) => console.warn('[pen]', ...args),
-  error: (...args: unknown[]) => console.error('[pen]', ...args)
+  warn: (...args: unknown[]) => console.warn('[pen]', ...args)
 }
 
 export interface PenDocumentInfo {

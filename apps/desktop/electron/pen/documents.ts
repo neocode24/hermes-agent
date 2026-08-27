@@ -119,7 +119,3 @@ export function shutdownPenHost(): void {
     closeDocument(docId)
   }
 }
-
-export function getDocument(docId: string): PenDocument | undefined {
-  return documents.get(docId)
-}

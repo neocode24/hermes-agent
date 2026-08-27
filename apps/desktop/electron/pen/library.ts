@@ -2,11 +2,10 @@
 // for the renderer. Always available — the hosted editor needs no local install.
 
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { deletePenFromLibrary, listPenLibrary, type PenLibraryEntry, penLibraryRoot, penWebEditorUrl, renamePenInLibrary } from '../pen-host'
 
-import { closeDocument, createDocument, describeDocument, openDocument } from './documents'
+import { closeDocument, createDocument, describeDocument, openDocument, penDocumentFilePath } from './documents'
 import { documents, type PenDocumentInfo } from './state'
 
 export interface PenStatus {
@@ -33,7 +32,7 @@ export async function openPenCanvas(options: { name?: string; path?: string }): 
 
 /** URL the renderer webview loads. Same hosted editor for every document;
  *  the embed bridge supplies the file via storage-load. */
-export function penCanvasUrl(_docId?: string): string {
+export function penCanvasUrl(): string {
   return penWebEditorUrl()
 }
 
@@ -48,10 +47,10 @@ export function penLibrary(): { items: PenLibraryItem[]; root: string } {
   const openByPath = new Map<string, string>()
 
   for (const doc of documents.values()) {
-    try {
-      openByPath.set(path.resolve(fileURLToPath(doc.fileURI)), doc.docId)
-    } catch {
-      // Non-file URI — can't collide with a library path.
+    const filePath = penDocumentFilePath(doc)
+
+    if (filePath) {
+      openByPath.set(path.resolve(filePath), doc.docId)
     }
   }
 
@@ -69,13 +68,11 @@ export function deletePenCanvas(target: string): boolean {
   const resolved = path.resolve(target)
 
   for (const doc of documents.values()) {
-    try {
-      if (path.resolve(fileURLToPath(doc.fileURI)) === resolved) {
-        closeDocument(doc.docId)
-        break
-      }
-    } catch {
-      // Not a file URI.
+    const filePath = penDocumentFilePath(doc)
+
+    if (filePath && path.resolve(filePath) === resolved) {
+      closeDocument(doc.docId)
+      break
     }
   }
 
@@ -87,12 +84,10 @@ export function renamePenCanvas(target: string, nextName: string): null | string
   const resolved = path.resolve(target)
 
   for (const doc of documents.values()) {
-    try {
-      if (path.resolve(fileURLToPath(doc.fileURI)) === resolved) {
-        return null
-      }
-    } catch {
-      // Not a file URI.
+    const filePath = penDocumentFilePath(doc)
+
+    if (filePath && path.resolve(filePath) === resolved) {
+      return null
     }
   }
 

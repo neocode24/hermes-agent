@@ -15,7 +15,6 @@ import {
   forgetPenSession,
   readPenSessions,
   rememberPenSession,
-  resolvePenEntry,
   retargetPenSessionPaths,
   sessionIdByCanvasPath
 } from './sessions'
@@ -93,7 +92,7 @@ function wirePenIpc(): void {
   ipcMain.handle('hermes:pen:status', async () => penStatus())
 
   ipcMain.handle('hermes:pen:open', async (_event, options) => {
-    const { projectId, sessionId, ...openOptions } = options || {}
+    const { sessionId, ...openOptions } = options || {}
     const doc = await openPenCanvas(openOptions)
 
     for (const closedId of closeOtherPenDocuments(doc.docId)) {
@@ -107,16 +106,15 @@ function wirePenIpc(): void {
     rememberPenSession(store, sessionId, {
       docId: doc.docId,
       path: penDocumentFilePath(doc) || openOptions.path || null,
-      projectId: projectId || null,
       closed: false
     })
 
-    return { doc, url: penCanvasUrl(doc.docId) }
+    return { doc, url: penCanvasUrl() }
   })
 
   // Draft chats open a canvas before they have a session id. Adopt ties it
   // once the chat is promoted so restore/reopen still work.
-  ipcMain.handle('hermes:pen:adopt', (_event, sessionId, projectId) => {
+  ipcMain.handle('hermes:pen:adopt', (_event, sessionId) => {
     if (!sessionId) {
       return false
     }
@@ -133,22 +131,17 @@ function wirePenIpc(): void {
     rememberPenSession(store, sessionId, {
       docId: doc.docId,
       path: penDocumentFilePath(doc),
-      projectId: projectId || null,
       closed: false
     })
 
     return true
   })
 
-  ipcMain.handle('hermes:pen:session', (_event, sessionId, projectId) => {
-    const { entry, via } = resolvePenEntry(readPenSessions(store), sessionId, projectId)
+  ipcMain.handle('hermes:pen:session', (_event, sessionId) => {
+    const entry = sessionId ? readPenSessions(store)[sessionId] ?? null : null
 
     if (!entry) {
       return null
-    }
-
-    if (via === 'project' && entry.closed) {
-      return { ...entry, closed: false }
     }
 
     const restorable = Boolean(entry.path) || documentIsOpen(entry.docId ?? '')
@@ -156,15 +149,11 @@ function wirePenIpc(): void {
     return restorable ? entry : null
   })
 
-  ipcMain.handle('hermes:pen:restore', async (_event, sessionId, projectId) => {
-    const { entry, via } = resolvePenEntry(readPenSessions(store), sessionId, projectId)
+  ipcMain.handle('hermes:pen:restore', async (_event, sessionId) => {
+    const entry = sessionId ? readPenSessions(store)[sessionId] ?? null : null
 
     if (!entry) {
       return null
-    }
-
-    if (via === 'project' && sessionId) {
-      rememberPenSession(store, sessionId, { docId: entry.docId, path: entry.path, projectId, closed: false })
     }
 
     if (entry.docId && documentIsOpen(entry.docId)) {
@@ -175,7 +164,7 @@ function wirePenIpc(): void {
       penDocSessions.set(entry.docId, sessionId)
       rememberPenSession(store, sessionId, { closed: false })
 
-      return { docId: entry.docId, url: penCanvasUrl(entry.docId) }
+      return { docId: entry.docId, url: penCanvasUrl() }
     }
 
     if (!entry.path || !fs.existsSync(entry.path)) {
@@ -193,7 +182,7 @@ function wirePenIpc(): void {
     penDocSessions.set(doc.docId, sessionId)
     rememberPenSession(store, sessionId, { docId: doc.docId, path: entry.path, closed: false })
 
-    return { doc, url: penCanvasUrl(doc.docId) }
+    return { doc, url: penCanvasUrl() }
   })
 
   ipcMain.handle('hermes:pen:library', () => {
